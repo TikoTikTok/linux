@@ -41,6 +41,8 @@ required:
   - interrupts
   - "#mbox-cells"
 
+additionalProperties: false
+
 examples:
   - |
     mailbox@c883c404 {
@@ -49,4 +51,3 @@ examples:
           interrupts = <208>, <209>, <210>;
           #mbox-cells = <1>;
     };
-

@@ -396,6 +396,7 @@ static int fhci_urb_enqueue(struct usb_hcd *hcd, struct urb *urb,
 	case PIPE_CONTROL:
 		/* 1 td fro setup,1 for ack */
 		size = 2;
+		fallthrough;
 	case PIPE_BULK:
 		/* one td for every 4096 bytes(can be up to 8k) */
 		size += urb->transfer_buffer_length / 4096;
@@ -407,8 +408,7 @@ static int fhci_urb_enqueue(struct usb_hcd *hcd, struct urb *urb,
 			size++;
 		else if ((urb->transfer_flags & URB_ZERO_PACKET) != 0
 			 && (urb->transfer_buffer_length
-			     % usb_maxpacket(urb->dev, pipe,
-					     usb_pipeout(pipe))) != 0)
+			     % usb_maxpacket(urb->dev, pipe)) != 0)
 			size++;
 		break;
 	case PIPE_ISOCHRONOUS:

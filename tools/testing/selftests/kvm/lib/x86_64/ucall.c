@@ -32,13 +32,16 @@ void ucall(uint64_t cmd, int nargs, ...)
 	va_end(va);
 
 	asm volatile("in %[port], %%al"
-		: : [port] "d" (UCALL_PIO_PORT), "D" (&uc) : "rax");
+		: : [port] "d" (UCALL_PIO_PORT), "D" (&uc) : "rax", "memory");
 }
 
 uint64_t get_ucall(struct kvm_vm *vm, uint32_t vcpu_id, struct ucall *uc)
 {
 	struct kvm_run *run = vcpu_state(vm, vcpu_id);
 	struct ucall ucall = {};
+
+	if (uc)
+		memset(uc, 0, sizeof(*uc));
 
 	if (run->exit_reason == KVM_EXIT_IO && run->io.port == UCALL_PIO_PORT) {
 		struct kvm_regs regs;

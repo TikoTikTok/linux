@@ -28,9 +28,6 @@
 #define ACPI_PROCESSOR_NOTIFY_POWER	0x81
 #define ACPI_PROCESSOR_NOTIFY_THROTTLING	0x82
 
-#define _COMPONENT		ACPI_PROCESSOR_COMPONENT
-ACPI_MODULE_NAME("processor_driver");
-
 MODULE_AUTHOR("Paul Diefenbaugh");
 MODULE_DESCRIPTION("ACPI Processor Driver");
 MODULE_LICENSE("GPL");
@@ -87,8 +84,7 @@ static void acpi_processor_notify(acpi_handle handle, u32 event, void *data)
 						  dev_name(&device->dev), event, 0);
 		break;
 	default:
-		ACPI_DEBUG_PRINT((ACPI_DB_INFO,
-				  "Unsupported event [0x%x]\n", event));
+		acpi_handle_debug(handle, "Unsupported event [0x%x]\n", event);
 		break;
 	}
 
@@ -102,8 +98,13 @@ static int acpi_soft_cpu_online(unsigned int cpu)
 	struct acpi_processor *pr = per_cpu(processors, cpu);
 	struct acpi_device *device;
 
-	if (!pr || acpi_bus_get_device(pr->handle, &device))
+	if (!pr)
 		return 0;
+
+	device = acpi_fetch_acpi_dev(pr->handle);
+	if (!device)
+		return 0;
+
 	/*
 	 * CPU got physically hotplugged and onlined for the first time:
 	 * Initialize missing things.
@@ -129,9 +130,8 @@ static int acpi_soft_cpu_online(unsigned int cpu)
 static int acpi_soft_cpu_dead(unsigned int cpu)
 {
 	struct acpi_processor *pr = per_cpu(processors, cpu);
-	struct acpi_device *device;
 
-	if (!pr || acpi_bus_get_device(pr->handle, &device))
+	if (!pr || !acpi_fetch_acpi_dev(pr->handle))
 		return 0;
 
 	acpi_processor_reevaluate_tstate(pr, true);
@@ -290,14 +290,13 @@ static int acpi_processor_notifier(struct notifier_block *nb,
 				   unsigned long event, void *data)
 {
 	struct cpufreq_policy *policy = data;
-	int cpu = policy->cpu;
 
 	if (event == CPUFREQ_CREATE_POLICY) {
-		acpi_thermal_cpufreq_init(cpu);
-		acpi_processor_ppc_init(cpu);
+		acpi_thermal_cpufreq_init(policy);
+		acpi_processor_ppc_init(policy);
 	} else if (event == CPUFREQ_REMOVE_POLICY) {
-		acpi_processor_ppc_exit(cpu);
-		acpi_thermal_cpufreq_exit(cpu);
+		acpi_processor_ppc_exit(policy);
+		acpi_thermal_cpufreq_exit(policy);
 	}
 
 	return 0;

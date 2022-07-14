@@ -13,7 +13,7 @@
 #include "tests/tests.h"
 #include "cloexec.h"
 #include "event.h"
-#include "util.h"
+#include <internal/lib.h> // page_size
 #include "arch-tests.h"
 
 static u64 rdpmc(unsigned int counter)
@@ -157,7 +157,7 @@ out_close:
 	return 0;
 }
 
-int test__rdpmc(struct test *test __maybe_unused, int subtest __maybe_unused)
+int test__rdpmc(struct test_suite *test __maybe_unused, int subtest __maybe_unused)
 {
 	int status = 0;
 	int wret = 0;
